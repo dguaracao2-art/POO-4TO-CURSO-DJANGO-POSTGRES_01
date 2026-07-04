@@ -1,0 +1,73 @@
+@startuml 07-er-facturacion
+title Modelo ER — Sistema de Facturación (SQL compatible)
+
+skinparam linetype ortho
+
+entity "categorias" as cat {
+  *id: BIGINT <<PK>>
+  --
+  *nombre: VARCHAR(100) <<UNIQUE>>
+  descripcion: TEXT
+}
+
+entity "productos" as prod {
+  *id: BIGINT <<PK>>
+  --
+  *codigo: VARCHAR(50) <<UNIQUE>>
+  *nombre: VARCHAR(200)
+  *precio: DECIMAL(10,2)
+  *stock: INTEGER <<db_default=0>>
+  *activo: BOOLEAN <<db_default=TRUE>>
+  *categoria_id: BIGINT <<FK>>
+  --
+  <<Check: stock >= 0>>
+  <<Check: precio >= 0>>
+}
+
+entity "clientes" as cli {
+  *id: BIGINT <<PK>>
+  --
+  *cedula: VARCHAR(20) <<UNIQUE>>
+  *nombre: VARCHAR(200)
+  *email: VARCHAR(254) <<UNIQUE>>
+  *telefono: VARCHAR(20)
+  *direccion: TEXT
+}
+
+entity "facturas" as fac {
+  *id: BIGINT <<PK>>
+  --
+  *numero: VARCHAR(20) <<UNIQUE>>
+  *fecha_emision: DATETIME <<auto_now_add>>
+  *subtotal: DECIMAL(12,2)
+  *iva: DECIMAL(12,2)
+  *total: DECIMAL(12,2)
+  *estado: VARCHAR(20) <<db_default='PENDIENTE'>>
+  *cliente_id: BIGINT <<FK>>
+  --
+  <<Check: total >= 0>>
+}
+
+entity "detalles_factura" as det {
+  *id: BIGINT <<PK>>
+  --
+  *cantidad: INTEGER
+  *precio_unitario: DECIMAL(10,2)
+  *subtotal: DECIMAL(12,2) <<Generated>>
+  *factura_id: BIGINT <<FK>>
+  *producto_id: BIGINT <<FK>>
+  --
+  <<Check: cantidad >= 1>>
+}
+
+cat ||--o{ prod : "1:N"
+cli ||--o{ fac : "1:N"
+fac ||--o{ det : "1:N (composición CASCADE)"
+prod ||--o{ det : "1:N"
+
+note right of det
+  subtotal = precio_unitario * cantidad
+  (GeneratedField DB-side)
+end note
+
+@enduml

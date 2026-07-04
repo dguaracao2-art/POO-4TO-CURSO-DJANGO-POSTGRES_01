@@ -1,0 +1,38 @@
+@startuml 03-clases-seguridad
+title Clases del módulo seguridad
+
+class User <<security>> {
+  - pkid: BigAutoField <<PK>>
+  - id: UUIDField <<unique>>
+  - username: str
+  - email: str
+  - first_name: str
+  - last_name: str
+  - password: str
+  - is_active: bool
+  - is_staff: bool
+  - date_joined: datetime
+  - created_at: datetime
+  - updated_at: datetime
+  - foto: ImageField
+  + get_full_name: str
+}
+
+class CustomUserManager <<security>> {
+  + create_user(username, first_name, last_name, email, password): User
+  + create_superuser(username, first_name, last_name, email, password): User
+}
+
+class LoginPageView <<security>> {
+  + get(): HTML
+  + post(): JsonResponse
+}
+
+class InicioTemplate <<security>> {
+  + get(): HTML
+}
+
+CustomUserManager ..> User : crea
+LoginPageView ..> User : autentica
+InicioTemplate ..> User : muestra datos
+@enduml

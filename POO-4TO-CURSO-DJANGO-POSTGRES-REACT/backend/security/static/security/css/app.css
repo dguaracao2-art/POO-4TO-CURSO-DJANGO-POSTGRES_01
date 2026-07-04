@@ -1,0 +1,101 @@
+:root {
+  --sidebar-width: 250px;
+}
+
+body {
+  background: #f8f9fc;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.card {
+  border-radius: 10px;
+  transition: box-shadow .2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.08);
+}
+
+.navbar-brand {
+  letter-spacing: -.5px;
+}
+
+main {
+  min-height: calc(100vh - 76px);
+}
+
+:focus-visible {
+  outline: 2px solid #4e73df;
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════
+   Skeleton Loading System
+   Clases reutilizables para todos los labs
+   Uso: agregar .skeleton a cualquier elemento
+   ═══════════════════════════════════════ */
+
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Texto */
+.skeleton-text { height: 1em; margin-bottom: .5rem; width: 100%; }
+.skeleton-text-sm { height: .75em; width: 60%; }
+.skeleton-heading { height: 1.5em; width: 40%; margin-bottom: 1rem; }
+.skeleton-card { height: 100px; border-radius: 10px; }
+.skeleton-avatar { width: 48px; height: 48px; border-radius: 50%; }
+.skeleton-thumb { width: 40px; height: 40px; border-radius: 6px; }
+
+/* Inputs y controles */
+.skeleton-input {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border: 1px solid transparent;
+  pointer-events: none;
+  min-height: 38px;
+  border-radius: 6px;
+}
+
+/* Botones */
+.skeleton-btn {
+  background: #e2e8f0 !important;
+  border-color: #d1d5db !important;
+  color: transparent !important;
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,.4) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Filas de tabla */
+.skeleton-row td { background: none !important; }
+.skeleton-row td::before {
+  content: '';
+  display: block;
+  height: 1em;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}

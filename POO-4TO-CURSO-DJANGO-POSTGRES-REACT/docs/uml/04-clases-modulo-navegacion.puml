@@ -1,0 +1,102 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam class {
+  BorderColor #2E4057
+  FontColor #2E4057
+  BackgroundColor #F0F4F8
+  ArrowColor #2E4057
+}
+
+title "Modelo de Navegación y Permisos — v2 (MenuItem auto-referencial)"
+
+abstract class BaseModel {
+  # created_at: DateTime
+  # updated_at: DateTime
+  # deleted_at: DateTime (nullable)
+  # is_active: Boolean
+  ..
+  # objects = SoftDeleteManager()
+  # all_objects = models.Manager()
+  ..
+  + soft_delete()
+  + restore()
+}
+
+class "SoftDeleteManager" as Manager {
+  + get_queryset(): QuerySet
+}
+
+class "models.Manager" as AllObjects {
+  + get_queryset(): QuerySet
+}
+
+class MenuItem {
+  - parent: FK → MenuItem (nullable)
+  - name: CharField(100)
+  - icon: CharField(50)
+  - url_name: CharField(200)
+  - order: PositiveIntegerField
+  - permissions: M2M → Permission
+  ..
+  + is_module: bool (parent is None)
+  + is_submodule: bool (parent is not None)
+  + has_access(user): bool
+  + accessible_children(user): list[MenuItem]
+}
+
+class "auth.Permission" as Permission {
+  - codename: CharField
+  - name: CharField
+  - content_type: FK → ContentType
+}
+
+class "auth.Group" as Group {
+  - name: CharField
+  ..
+  + permissions: M2M[Permission]
+}
+
+class User {
+  - email: EmailField
+  - username: CharField
+  - first_name: CharField
+  - last_name: CharField
+  - is_active: BooleanField
+  - is_staff: BooleanField
+  - is_superuser: BooleanField
+  - date_joined: DateTimeField
+  - foto: ImageField
+  ..
+  + groups: M2M[Group]
+  + user_permissions: M2M[Permission]
+  + has_perm(perm): bool
+}
+
+' === Herencia ===
+BaseModel <|-- MenuItem
+SoftDeleteManager <.. BaseModel : objects >
+AllObjects <.. BaseModel : all_objects >
+AbstractBaseUser <|-- User
+PermissionsMixin <|-- User
+
+' === Auto-referencia ===
+MenuItem "1" --> "*" MenuItem : parent >
+
+' === Relaciones con auth ===
+MenuItem "*" --> "*" Permission : requiere >
+User "*" --> "*" Group : pertenece a >
+Group "*" --> "*" Permission : tiene permisos >
+User "*" --> "*" Permission : permisos directos >
+
+note top of MenuItem
+  **MODELO ÚNICO**
+  parent=None  → Módulo raíz (Dashboard, Seguridad...)
+  parent!=None → Submódulo (Usuarios, Roles...)
+end note
+
+note right of MenuItem : has_access() verifica\npermisos recursivamente
+
+note bottom of User : Django auth nativo.\nGrupos = Perfiles/Roles.
+
+@enduml

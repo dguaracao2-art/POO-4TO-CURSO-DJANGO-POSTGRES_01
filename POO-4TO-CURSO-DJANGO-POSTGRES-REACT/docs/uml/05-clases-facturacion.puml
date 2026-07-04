@@ -1,0 +1,124 @@
+@startuml 05-clases-facturacion
+title Sistema de Facturación — Diagrama de Clases (v2 con BaseModel)
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+
+abstract class BaseModel {
+  # created_at: DateTime
+  # updated_at: DateTime
+  # deleted_at: DateTime (nullable)
+  # is_active: Boolean
+  ..
+  + soft_delete()
+  + restore()
+}
+
+package "apps.catalog" {
+  class Categoria {
+    - nombre: CharField(100)
+    - descripcion: TextField(blank)
+  }
+
+  class Producto {
+    - codigo: CharField(50, unique)
+    - nombre: CharField(200)
+    - descripcion: TextField(blank)
+    - precio: DecimalField(10,2)
+    - iva_porcentaje: DecimalField(4,2)
+    - stock: IntegerField
+    - stock_minimo: IntegerField
+    - imagen: ImageField(null)
+  }
+}
+
+package "apps.customers" {
+  class Cliente {
+    - cedula: CharField(13, unique)
+    - nombre: CharField(200)
+    - email: EmailField(unique)
+    - telefono: CharField(20)
+    - direccion: TextField(blank)
+  }
+}
+
+package "apps.invoicing" {
+  class Factura {
+    - numero: CharField(20, unique)
+    - fecha_emision: DateTimeField
+    - cliente: FK → Cliente
+    - usuario: FK → User
+    - subtotal: DecimalField(12,2)
+    - iva_total: DecimalField(12,2)
+    - total: DecimalField(12,2)
+    - metodo_pago: CharField(50)
+    - observaciones: TextField(blank)
+  }
+
+  class DetalleFactura {
+    - factura: FK → Factura
+    - producto: FK → Producto
+    - cantidad: IntegerField
+    - precio_unitario: DecimalField(10,2)
+    - descuento_pct: DecimalField(5,2)
+    - subtotal: DecimalField(12,2)
+    - iva_porcentaje: DecimalField(4,2)
+    - iva_valor: DecimalField(12,2)
+    - total: DecimalField(12,2)
+  }
+
+  class FacturaService {
+    + {static} crear(cliente_id, usuario_id, productos_data): Factura
+    + {static} anular(factura_id): Factura
+  }
+
+  class FacturacionError <<exception>>
+  class StockInsuficienteError <<exception>>
+  class FacturaAnuladaError <<exception>>
+}
+
+BaseModel <|-- Categoria
+BaseModel <|-- Producto
+BaseModel <|-- Cliente
+BaseModel <|-- Factura
+BaseModel <|-- DetalleFactura
+
+Categoria "1" -- "0..*" Producto : clasifica
+Cliente "1" -- "0..*" Factura : emite
+Factura "1" *-- "1..*" DetalleFactura : contiene >
+Producto "1" -- "1..*" DetalleFactura : referenciado por
+
+FacturaService ..> Factura : crea
+FacturaService ..> DetalleFactura : crea
+FacturaService ..> Producto : descuenta stock (F atómico)
+FacturaService ..> StockInsuficienteError : lanza
+FacturaService ..> FacturaAnuladaError : lanza
+
+StockInsuficienteError --|> FacturacionError
+FacturaAnuladaError --|> FacturacionError
+
+note right of DetalleFactura
+  **Cálculos:**
+  subtotal = cant * p_unitario * (1 - desc%/100)
+  iva_valor = subtotal * iva% / 100
+  total = subtotal + iva_valor
+end note
+
+note right of Producto
+  Stock atómico (sin race condition):
+  Producto.objects.filter(
+    id=X, stock__gte=N
+  ).update(
+    stock=F('stock') - N
+  )
+end note
+
+note bottom of Factura
+  Número secuencial:
+  FAC-YYYYMMDD-XXXXX
+  Método de pago: Efectivo,
+  Tarjeta Débito/Crédito,
+  Transferencia, Crédito
+end note
+
+@enduml

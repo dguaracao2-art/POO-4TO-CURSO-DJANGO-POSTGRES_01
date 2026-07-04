@@ -1,0 +1,32 @@
+@startuml 03-secuencia-login
+title Secuencia — Login con AJAX (MVT)
+
+actor Usuario
+participant "Navegador" as Browser
+participant "LoginPageView\n(security/views.py)" as View
+participant "Authentication\nBackend" as Auth
+participant "Template\nlogin.html" as Template
+database "MySQL / PostgreSQL" as DB
+
+Usuario -> Browser: email y contraseña
+Browser -> View: POST /security/login/ (JSON o FormData)
+note right: Fetch API con X-CSRFToken
+
+View -> View: detecta content-type\n(JSON vs form)
+View -> Auth: authenticate(request, email, password)
+Auth -> DB: SELECT * FROM security_user WHERE email=?
+DB --> Auth: row (password hash)
+
+alt credenciales válidas + usuario activo
+  Auth --> View: user object
+  View -> View: login(request, user)
+  View --> Browser: 200 {"resp": True, "user": {...}}
+  Browser -> Browser: window.location.href = "/"
+else usuario inactivo
+  View --> Browser: 403 {"resp": False, "error": "Usuario no habilitado"}
+else credenciales incorrectas
+  View --> Browser: 400 {"resp": False, "error": "Credenciales incorrectas"}
+else error interno
+  View --> Browser: 500 {"resp": False, "error": "Error interno"}
+end
+@enduml

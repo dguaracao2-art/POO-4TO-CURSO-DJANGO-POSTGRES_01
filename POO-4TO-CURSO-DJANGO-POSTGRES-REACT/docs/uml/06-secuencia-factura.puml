@@ -1,0 +1,56 @@
+@startuml 06-secuencia-factura
+title Secuencia — Creación transaccional de factura con F() atómico
+
+actor Usuario
+participant "InvoiceCreateView\n(MVT)" as View
+participant "FacturaService" as Service
+participant "Producto\n(stock)" as Producto
+participant "Factura\n(maestro)" as Factura
+participant "DetalleFactura\n(detalle)" as Detalle
+database "MySQL / PostgreSQL" as DB
+
+Usuario -> View: POST /invoicing/create/\n{cliente_id, productos_json}
+View -> Service: FacturaService.crear(cliente, usuario, productos_data)
+note right: Inicia @transaction.atomic
+
+group loop por cada detalle
+  Service -> Producto: Producto.objects.filter(\n  pk=id, stock__gte=cantidad\n)
+  Service -> Producto: .update(stock=F('stock') - cantidad)
+  note right: ⚡ UNA SOLA CONSULTA\nUPDATE + validación\nsin FOR UPDATE ni locks
+
+  Producto -> DB: UPDATE productos SET stock=stock-3\nWHERE id=1 AND stock>=3
+  DB --> Producto: filas_afectadas = 1 (o 0)
+  Producto --> Service: updated = 1 (éxito)
+
+  alt updated == 0
+    Service -> Service: raise StockInsuficienteError
+    Service --> API: 400 Bad Request\n{"error": "Stock insuficiente"}
+    note right: ROLLBACK automático\npor @transaction.atomic
+  end
+end
+
+Service -> Service: Calcular subtotal_total
+Service -> Service: iva = subtotal * 0.15
+Service -> Service: total = subtotal + iva
+
+Service -> Factura: Factura.objects.create(\n  cliente, numero, subtotal,\n  iva, total, estado='PENDIENTE')
+Factura -> DB: INSERT INTO facturas
+DB --> Factura: factura.id
+
+Service -> Detalle: DetalleFactura.objects.bulk_create(\n  [linea1, linea2, ...])
+Detalle -> DB: INSERT INTO detalles_factura (batch)
+DB --> Detalle: ok
+
+Service --> API: return Factura (con detalles)
+API --> Usuario: 201 Created\n{id, numero, subtotal, iva,\ntotal, estado, detalles}
+
+group anular factura
+  Usuario -> View: POST /invoicing/{pk}/annul/
+  View -> Service: FacturaService.anular(factura_id)
+  Service -> Producto: Producto.objects.filter(pk=detalle.producto_id)\n.update(stock=F('stock') + detalle.cantidad)
+  Service -> Factura: factura.estado = 'ANULADA'\nfactura.save()
+  Service --> API: Factura anulada
+  API --> Usuario: 200 {estado: "ANULADA"}
+end
+
+@enduml
