@@ -80,7 +80,11 @@
         <div class="d-flex align-items-center">
           <i class="bi bi-person-circle fs-5 me-2 text-secondary"></i>
           <div class="small">
-            <div class="text-light">{{ user.get_full_name|default:user.email }}</div>
+            {% if user.is_authenticated %}
+    <div class="text-light">{{ user.get_full_name|default:user.email }}</div>
+{% else %}
+    <div class="text-light">Invitado</div>
+{% endif %}
             <form method="post" action="{% url 'security:logout' %}">
               {% csrf_token %}
               <button type="submit" class="btn btn-sm btn-link text-secondary p-0">

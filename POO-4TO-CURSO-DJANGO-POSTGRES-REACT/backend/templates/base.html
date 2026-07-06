@@ -29,7 +29,11 @@
         <div class="d-flex align-items-center">
           <span class="text-light me-3 small">
             <i class="bi bi-person-circle me-1"></i>
-            {{ user.get_full_name|default:user.email }}
+            {% if user.is_authenticated %}
+    {{ user.get_full_name|default:user.email }}
+{% else %}
+    Invitado
+{% endif %}
           </span>
           <form method="post" action="{% url 'security:logout' %}" class="d-inline">
             {% csrf_token %}
