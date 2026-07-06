@@ -1,0 +1,36 @@
+{% extends "admin/base_admin.html" %}
+{% load static %}
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Rol{% endblock %}
+{% block page_title %}{% if object %}Editar{% else %}Nuevo{% endif %} Rol{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="max-width:700px">
+  <div class="card-body p-4">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% for error in form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">{{ form.permissions.label }}</label>
+        <div class="small text-muted mb-2">Seleccione uno o más permisos (Ctrl+clic para múltiples).</div>
+        {{ form.permissions }}
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" id="btnSubmit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar</button>
+        <a href="{% url 'security:group_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('btnSubmit')?.addEventListener('click', function() {
+  this.classList.add('skeleton-btn');
+});
+</script>
+{% endblock %}
