@@ -70,7 +70,7 @@ class ProfileForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data['email']
-        if User.all_objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError('Este email ya está registrado.')
         return email
 
