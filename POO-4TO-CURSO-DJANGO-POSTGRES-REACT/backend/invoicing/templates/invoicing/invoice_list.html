@@ -1,0 +1,40 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Facturas{% endblock %}
+{% block page_title %}Historial de Facturas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <form method="get" class="d-flex gap-2 flex-wrap">
+    <input type="date" name="desde" class="form-control form-control-sm" style="width:auto" value="{{ request.GET.desde }}">
+    <input type="date" name="hasta" class="form-control form-control-sm" style="width:auto" value="{{ request.GET.hasta }}">
+    <button class="btn btn-sm btn-outline-primary"><i class="bi bi-funnel"></i> Filtrar</button>
+  </form>
+  <a href="{% url 'invoicing:invoice_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nueva Factura</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for f in factura_list %}
+      <tr>
+        <td class="small">{{ f.numero }}</td>
+        <td class="small">{{ f.fecha_emision|date:'d/m/Y H:i' }}</td>
+        <td>{{ f.cliente.nombre }}</td>
+        <td>${{ f.subtotal|floatformat:2 }}</td>
+        <td>${{ f.iva_total|floatformat:2 }}</td>
+        <td><strong>${{ f.total|floatformat:2 }}</strong></td>
+        <td>{% if f.is_active %}<span class="badge bg-success">Activa</span>{% else %}<span class="badge bg-danger">Anulada</span>{% endif %}</td>
+        <td class="text-end">
+          <a href="{% url 'invoicing:invoice_detail' f.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="8" class="text-center text-muted py-4">No hay facturas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include 'catalog/_pagination.html' %}
+{% endblock %}

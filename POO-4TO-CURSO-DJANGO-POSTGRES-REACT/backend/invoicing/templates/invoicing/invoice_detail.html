@@ -1,0 +1,77 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Factura {{ factura.numero }}{% endblock %}
+{% block page_title %}Factura {{ factura.numero }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">Sistema de Facturación</h5>
+            <p class="text-muted small mb-0">Factura {{ factura.numero }}</p>
+          </div>
+          <div class="text-end">
+            <p class="mb-0 small">Fecha: {{ factura.fecha_emision|date:'d/m/Y H:i' }}</p>
+            <p class="mb-0 small">Vendedor: {{ factura.usuario.get_full_name }}</p>
+          </div>
+        </div>
+        <hr>
+        <p><strong>Cliente:</strong> {{ factura.cliente.nombre }}<br>
+        <span class="small text-muted">{{ factura.cliente.cedula }} | {{ factura.cliente.email }}</span></p>
+        <hr>
+        <table class="table table-sm">
+          <thead><tr><th>Producto</th><th>Cant.</th><th>P/U</th><th>Desc.%</th><th>Subtotal</th><th>IVA</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for d in detalles %}
+            <tr>
+              <td>{{ d.producto.nombre }}</td>
+              <td>{{ d.cantidad }}</td>
+              <td>${{ d.precio_unitario|floatformat:2 }}</td>
+              <td>{{ d.descuento_pct|floatformat:1 }}%</td>
+              <td>${{ d.subtotal|floatformat:2 }}</td>
+              <td>${{ d.iva_valor|floatformat:2 }}</td>
+              <td>${{ d.total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <hr>
+        <div class="text-end">
+          <p>Subtotal: ${{ factura.subtotal|floatformat:2 }}</p>
+          <p>IVA {{ factura.iva_total|floatformat:2 }}</p>
+          <h4 class="fw-bold">TOTAL: ${{ factura.total|floatformat:2 }}</h4>
+        </div>
+        {% if factura.observaciones %}<hr><p class="small text-muted">{{ factura.observaciones }}</p>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3">Acciones</h6>
+        {% if factura.is_active %}
+        <form method="post" action="{% url 'invoicing:invoice_annul' factura.pk %}">
+          {% csrf_token %}
+          <button type="submit" id="btnSubmit" class="btn btn-danger w-100" onclick="return confirm('¿Anular esta factura? El stock se restaurará.')">
+            <i class="bi bi-x-circle"></i> Anular Factura
+          </button>
+        </form>
+        {% else %}
+        <span class="badge bg-danger d-block p-2 text-center">Factura Anulada</span>
+        {% endif %}
+        <a href="{% url 'invoicing:invoice_list' %}" class="btn btn-outline-secondary w-100 mt-2">Volver al listado</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('btnSubmit')?.addEventListener('click', function() {
+  this.classList.add('skeleton-btn');
+});
+</script>
+{% endblock %}
