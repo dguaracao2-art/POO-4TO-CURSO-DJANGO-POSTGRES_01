@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Listado de Facturas {{ desde|date:'d/m/Y' }} - {{ hasta|date:'d/m/Y' }}</title>
+  <link href="{% static 'invoicing/css/invoice-pdf.css' %}" rel="stylesheet">
+</head>
+<body>
+  <div class="brand-header">
+    <h1>Comercial "El Porvenir"</h1>
+    <div class="brand-sub">SISTEMA DE FACTURACION</div>
+    <div class="brand-meta">RUC: 1799999999001 | Av. Principal s/n | Tel: 0999999999</div>
+  </div>
+
+  <div class="report-title">
+    <h2>Listado de Facturas</h2>
+    <p class="period">Del {{ desde|date:'d/m/Y' }} al {{ hasta|date:'d/m/Y' }}</p>
+  </div>
+
+  <div class="summary-grid">
+    <table class="nogrid">
+      <tr>
+        <td><div class="summary-card card-primary"><div class="label">Total Facturas</div><div class="value">{{ facturas.count }}</div></div></td>
+        <td><div class="summary-card card-success"><div class="label">Activas</div><div class="value">{{ resumen.cantidad|default:0 }}</div></div></td>
+        <td><div class="summary-card card-warning"><div class="label">Anuladas</div><div class="value">{{ anuladas }}</div></div></td>
+        <td><div class="summary-card card-danger"><div class="label">Total Vendido</div><div class="value">${{ resumen.total|default:0|floatformat:0 }}</div></div></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section-title">Detalle de Facturas del Periodo</div>
+  <table class="data" border="1">
+    <thead>
+      <tr>
+        <th style="padding:5px 10px 5px 10px;">N° Factura</th>
+        <th style="padding:5px 10px 5px 10px;">Fecha</th>
+        <th style="padding:5px 10px 5px 10px;">Cliente</th>
+        <th style="padding:5px 10px 5px 10px;">Metodo</th>
+        <th style="padding:5px 10px 5px 10px;text-align:right;">Subtotal</th>
+        <th style="padding:5px 10px 5px 10px;text-align:right;">IVA</th>
+        <th style="padding:5px 10px 5px 10px;text-align:right;">Total</th>
+        <th style="padding:5px 10px 5px 10px;text-align:center;">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in facturas %}
+      <tr>
+        <td style="padding:4px 10px 4px 10px;"><span class="fw-bold">{{ f.numero }}</span></td>
+        <td style="padding:4px 10px 4px 10px;">{{ f.fecha_emision|date:'d/m/Y' }}</td>
+        <td style="padding:4px 10px 4px 10px;">{{ f.cliente.nombre }}</td>
+        <td style="padding:4px 10px 4px 10px;">{{ f.metodo_pago }}</td>
+        <td style="padding:4px 10px 4px 10px;text-align:right;">${{ f.subtotal|floatformat:2 }}</td>
+        <td style="padding:4px 10px 4px 10px;text-align:right;">${{ f.iva_total|floatformat:2 }}</td>
+        <td style="padding:4px 10px 4px 10px;text-align:right;font-weight:700;">${{ f.total|floatformat:2 }}</td>
+        <td style="padding:4px 10px 4px 10px;text-align:center;">
+          {% if f.is_active %}<span class="badge badge-success">ACTIVA</span>{% else %}<span class="badge badge-danger">ANULADA</span>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" style="padding:20px;text-align:center;color:#94a3b8;">No se encontraron facturas en el periodo.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if facturas %}
+  <div class="totals-box">
+    <div class="line">Facturas: {{ facturas.count }} | Activas: {{ resumen.cantidad|default:0 }} | Anuladas: {{ anuladas }}</div>
+    <div class="line">Subtotal: ${{ resumen.subtotal|default:0|floatformat:2 }}</div>
+    <div class="line">IVA: ${{ resumen.iva|default:0|floatformat:2 }}</div>
+    <div class="line total">TOTAL DEL PERIODO: ${{ resumen.total|default:0|floatformat:2 }}</div>
+  </div>
+  {% endif %}
+
+  <div class="report-footer">
+    <p class="footer-brand">SIF — Sistema de Facturacion</p>
+    <p>Documento generado el {% now "d/m/Y \a \l\a\s H:i" %}</p>
+    <p>Este documento es un reporte interno de uso administrativo.</p>
+  </div>
+</body>
+</html>
