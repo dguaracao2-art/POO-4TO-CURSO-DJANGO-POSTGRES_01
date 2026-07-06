@@ -7,4 +7,5 @@ urlpatterns = [
     path("", InicioTemplate.as_view(), name="home"),
     path("security/", include("security.urls")),
     path("catalog/", include("catalog.urls")),
+    path("customers/", include("customers.urls")),
 ]
